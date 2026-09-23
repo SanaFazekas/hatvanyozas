@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A hatványok</title>
+    <style>
+        :root {
+            --primary: #8E44AD;
+            --secondary: #9B59B6;
+            --bg-color: #ECF0F1;
+            --panel-bg: #FFFFFF;
+            --text-color: #2C3E50;
+            --success: #27AE60;
+            --danger: #C0392B;
+            --border: #BDC3C7;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Settings */
+        .sidebar {
+            width: 390px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin: 0;
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 5px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        select, input[type="text"] {
+            padding: 6px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        .mode-toggle {
+            display: flex;
+            background: #EAEDED;
+            border-radius: 6px;
+            padding: 3px;
+            gap: 3px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 6px;
+            border: none;
+            background: transparent;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn-success { background: var(--success); }
+        .btn-danger { background: var(--danger); }
+        .btn-dark { background: var(--text-color); }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            padding: 20px 30px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .app-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        /* Summary Banner */
+        .summary-banner {
+            background: #F4ECF7;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .summary-banner h3 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        /* Task List Layout */
+        .tasks-container {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 100%;
+            max-width: 850px;
+            margin-bottom: 20px;
+        }
+
+        .task-card {
+            background: white;
+            padding: 14px 18px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .task-main-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* Hatvány alakú beviteli doboz (alap + felső index kitevő) */
+        .power-input-wrapper {
+            display: inline-flex;
+            align-items: flex-start;
+            position: relative;
+            background: #F9EBEA;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 8px;
+        }
+
+        .base-input {
+            width: 45px !important;
+            height: 40px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: 1px solid var(--border);
+        }
+
+        .exp-input {
+            width: 35px !important;
+            height: 25px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border: 1px solid var(--border);
+            margin-left: 2px;
+            margin-top: -10px;
+        }
+
+        .standard-input {
+            width: 160px !important;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        /* Step-by-step solution breakdown box */
+        .solution-breakdown {
+            background-color: #FDEDEC;
+            border-left: 4px solid var(--danger);
+            padding: 10px 14px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #78281F;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .solution-breakdown strong {
+            color: var(--danger);
+        }
+
+        /* Group / Projection Mode (2x font) */
+        .group-mode .task-card {
+            font-size: 1.8rem;
+            padding: 22px 26px;
+            border: 2px solid var(--primary);
+        }
+
+        .group-mode .task-main-row {
+            font-size: 1.6rem;
+        }
+
+        /* Statistics Table */
+        .stats-wrapper {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+            text-align: center;
+        }
+
+        th, td {
+            padding: 5px 4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: var(--primary);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        /* Print formatting for PDF download */
+        @media print {
+            .sidebar, .header-bar button, .summary-banner, #submit-container, .solution-breakdown {
+                display: none !important;
+            }
+            body {
+                height: auto;
+                background: white;
+            }
+            .main-content {
+                padding: 0;
+                overflow: visible;
+            }
+            .task-card {
+                border: 1px solid #000;
+                box-shadow: none;
+            }
+            input {
+                border: none;
+                border-bottom: 1px solid #000;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR / BEÁLLÍTÁSOK -->
+    <div class="sidebar">
+        <h2>⚙️ Hatványok - Beállítások</h2>
+
+        <div class="form-group">
+            <label>Munkamód:</label>
+            <div class="mode-toggle">
+                <button id="btn-mode-ind" class="mode-btn active" onclick="setWorkMode('individual')">Egyéni</button>
+                <button id="btn-mode-grp" class="mode-btn" onclick="setWorkMode('group')">Csoportos</button>
+            </div>
+        </div>
+
+        <div class="form-group" id="student-name-group">
+            <label for="student-name">Tanuló neve:</label>
+            <input type="text" id="student-name" placeholder="Írd be a neved...">
+        </div>
+
+        <div class="form-group">
+            <label for="topic-select">Téma / Szint:</label>
+            <select id="topic-select" onchange="updateSubOptions()">
+                <option value="recog_power">Felismerő: Hatványok felírása szorzatból</option>
+                <option value="recog_product">Felismerő: Hatványok szorzatrabontása</option>
+                <option value="appl_base">Alkalmazási: Azonos alapú hatványok</option>
+                <option value="appl_exp">Alkalmazási: Azonos kitevőjű hatványok</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="sub-op-group">
+            <label for="sub-op-select">Művelet / Típus:</label>
+            <select id="sub-op-select"></select>
+        </div>
+
+        <div class="form-group" style="margin-top: 5px;">
+            <label for="count-select">Feladatok száma:</label>
+            <select id="count-select" onchange="generateNewSeries()">
+                <option value="5">5 feladat</option>
+                <option value="8" selected>8 feladat</option>
+                <option value="10">10 feladat</option>
+                <option value="12">12 feladat</option>
+            </select>
+        </div>
+
+        <button class="btn btn-success" onclick="generateNewSeries()">Új feladatsor 🔄</button>
+
+        <div style="margin-top: 10px;">
+            <h2>📊 Statisztika</h2>
+            <div class="stats-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Név</th>
+                            <th>Téma</th>
+                            <th>Pont</th>
+                            <th>%</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stats-tbody"></tbody>
+                </table>
+            </div>
+            <div style="display: flex; gap: 5px; margin-top: 8px;">
+                <button class="btn btn-dark" style="flex: 1;" onclick="downloadPDF()">Letöltés PDF-ben 📄</button>
+                <button class="btn btn-danger" style="flex: 1;" onclick="clearStats()">Törlés 🗑️</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="main-content" id="main-content-area">
+        <div class="header-bar">
+            <div class="app-title">A hatványozás alapjai</div>
+            <div id="display-student-info" style="font-weight: bold; font-size: 1.1rem;"></div>
+        </div>
+
+        <div id="summary-banner" class="summary-banner">
+            <h3 id="summary-title">Eredményértékelés</h3>
+            <div id="summary-details" style="font-weight: 600;"></div>
+        </div>
+
+        <div id="tasks-wrapper" class="tasks-container"></div>
+
+        <div id="submit-container" style="margin-top: 10px; display: flex; gap: 10px;">
+            <button id="btn-check" class="btn btn-success" style="font-size: 1.1rem; padding: 10px 20px;" onclick="checkAnswers()">Ellenőrzés ✨</button>
+            <button id="btn-show-key" class="btn btn-dark" style="font-size: 1.1rem; padding: 10px 20px; display: none;" onclick="toggleAnswerKey()">Megoldókulcs 🔑</button>
+        </div>
+    </div>
+
+<script>
+let currentMode = 'individual';
+let generatedTasks = [];
+let answerKeyVisible = false;
+
+function updateSubOptions() {
+    const topic = document.getElementById('topic-select').value;
+    const subSelect = document.getElementById('sub-op-select');
+    subSelect.innerHTML = '';
+
+    if (topic === 'recog_power' || topic === 'recog_product') {
+        subSelect.innerHTML = `<option value="all">Alapjellemzők gyakorlása</option>`;
+        subSelect.disabled = true;
+    } else if (topic === 'appl_base') {
+        subSelect.disabled = false;
+        subSelect.innerHTML = `
+            <option value="addsub">Összeadás / Kivonás (együtt)</option>
+            <option value="mul">Szorzás (azonos alap)</option>
+            <option value="div">Osztás (azonos alap)</option>
+            <option value="pow">Hatványozás (hatvány hatványa)</option>
+        `;
+    } else if (topic === 'appl_exp') {
+        subSelect.disabled = false;
+        subSelect.innerHTML = `
+            <option value="mul">Szorzás (azonos kitevő)</option>
+            <option value="div">Osztás (azonos kitevő)</option>
+            <option value="mixed">Kevert változat</option>
+        `;
+    }
+    generateNewSeries();
+}
+
+function setWorkMode(mode) {
+    currentMode = mode;
+    document.getElementById('btn-mode-ind').classList.toggle('active', mode === 'individual');
+    document.getElementById('btn-mode-grp').classList.toggle('active', mode === 'group');
+    
+    const nameGroup = document.getElementById('student-name-group');
+    const mainArea = document.getElementById('main-content-area');
+    const checkBtn = document.getElementById('btn-check');
+    const keyBtn = document.getElementById('btn-show-key');
+    document.getElementById('summary-banner').style.display = 'none';
+
+    if (mode === 'group') {
+        nameGroup.style.display = 'none';
+        mainArea.classList.add('group-mode');
+        checkBtn.style.display = 'none';
+        keyBtn.style.display = 'inline-flex';
+    } else {
+        nameGroup.style.display = 'flex';
+        mainArea.classList.remove('group-mode');
+        checkBtn.style.display = 'inline-flex';
+        keyBtn.style.display = 'none';
+    }
+    generateNewSeries();
+}
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateNewSeries() {
+    if (currentMode === 'individual') {
+        const name = document.getElementById('student-name').value.trim();
+        if (!name) {
+            alert('Kérlek, add meg a tanuló nevét az egyéni munkához!');
+            return;
+        }
+    }
+
+    const count = parseInt(document.getElementById('count-select').value);
+    const topic = document.getElementById('topic-select').value;
+    const subOp = document.getElementById('sub-op-select').value;
+
+    generatedTasks = [];
+    answerKeyVisible = false;
+    document.getElementById('summary-banner').style.display = 'none';
+
+    const bases = ['a', 'b', 'x', 'y', '2', '3', '5'];
+
+    for (let i = 0; i < count; i++) {
+        let base = bases[Math.floor(Math.random() * bases.length)];
+        let exp1 = getRandomInt(2, 6);
+        let exp2 = getRandomInt(2, 4);
+
+        let task = {};
+
+        if (topic === 'recog_power') {
+            // Felismerő a): Szorzatból hatvány (pl. a.a.a.a.a -> a^5)
+            let countN = getRandomInt(3, 8);
+            let factors = Array(countN).fill(base).join(' · ');
+            task = {
+                type: 'power_box',
+                questionText: `Írd fel hatvány alakban: <strong>${factors}</strong> =`,
+                correctBase: base,
+                correctExp: countN,
+                displayAnswer: `${base}<sup>${countN}</sup>`,
+                explanation: `Mivel a(z) ${base} alap ${countN}-szer szorzódik önmagával, a hatvány alak: ${base} a ${countN}-ediken.`
+            };
+        } 
+        else if (topic === 'recog_product') {
+            // Felismerő b): Hatványból szorzat (pl. a a hatodikon -> a·a·a·a·a·a)
+            task = {
+                type: 'text_box',
+                questionText: `Írd fel szorzatként: <strong>${base}<sup>${exp1}</sup></strong> =`,
+                correctAnswer: Array(exp1).fill(base).join('·'),
+                displayAnswer: Array(exp1).fill(base).join('·'),
+                explanation: `A hatványkitevő (${exp1}) mutatja, hogy a(z) ${base} alapot hányszor kell önmagával megszorozni.`
+            };
+        }
+        else if (topic === 'appl_base') {
+            // Azonos alapú hatványok
+            if (subOp === 'addsub') {
+                let op = Math.random() > 0.5 ? '+' : '-';
+                task = {
+                    type: 'text_box',
+                    questionText: `Összevonás: <strong>${base}<sup>${exp1}</sup> ${op} ${base}<sup>${exp1}</sup></strong> =`,
+                    correctAnswer: op === '+' ? `2${base}${exp1}` : `0`,
+                    displayAnswer: op === '+' ? `2·${base}<sup>${exp1}</sup>` : `0`,
+                    explanation: `Az azonos alapú és azonos kitevőjű hatványokat összeadva összevonjuk az együtthatókat (1 + 1 = 2), kivonás esetén pedig 0 lesz az eredmény.`
+                };
+            } else if (subOp === 'mul') {
+                let ansExp = exp1 + exp2;
+                task = {
+                    type: 'power_box',
+                    questionText: `Szorzás: <strong>${base}<sup>${exp1}</sup> · ${base}<sup>${exp2}</sup></strong> =`,
+                    correctBase: base,
+                    correctExp: ansExp,
+                    displayAnswer: `${base}<sup>${ansExp}</sup>`,
+                    explanation: `Azonos alapú hatványok szorzásakor az alapot változatlanul hagyjuk, a kitevőket pedig összeadjuk (${exp1} + ${exp2} = ${ansExp}).`
+                };
+            } else if (subOp === 'div') {
+                if (exp1 <= exp2) exp1 = exp2 + getRandomInt(1, 3);
+                let ansExp = exp1 - exp2;
+                task = {
+                    type: 'power_box',
+                    questionText: `Osztás: <strong>${base}<sup>${exp1}</sup> : ${base}<sup>${exp2}</sup></strong> =`,
+                    correctBase: base,
+                    correctExp: ansExp,
+                    displayAnswer: `${base}<sup>${ansExp}</sup>`,
+                    explanation: `Azonos alapú hatványok osztásakor az alapot változatlanul hagyjuk, a kitevőket pedig kivonjuk (${exp1} - ${exp2} = ${ansExp}).`
+                };
+            } else if (subOp === 'pow') {
+                let ansExp = exp1 * exp2;
+                task = {
+                    type: 'power_box',
+                    questionText: `Hatvány hatványa: <strong>(${base}<sup>${exp1}</sup>)<sup>${exp2}</sup></strong> =`,
+                    correctBase: base,
+                    correctExp: ansExp,
+                    displayAnswer: `${base}<sup>${ansExp}</sup>`,
+                    explanation: `Hatvány hatványozásakor az alapot változatlanul hagyjuk, a kitevőket pedig összemoszorozzuk (${exp1} · ${exp2} = ${ansExp}).`
+                };
+            }
+        }
+        else if (topic === 'appl_exp') {
+            // Azonos kitevőjű hatványok
+            let base2 = bases[(bases.indexOf(base) + 1) % bases.length];
+            if (subOp === 'mul' || (subOp === 'mixed' && Math.random() > 0.5)) {
+                task = {
+                    type: 'text_box',
+                    questionText: `Szorzás (azonos kitevő): <strong>${base}<sup>${exp1}</sup> · ${base2}<sup>${exp1}</sup></strong> =`,
+                    correctAnswer: `(${base}·${base2})${exp1}`,
+                    displayAnswer: `(${base}·${base2})<sup>${exp1}</sup>`,
+                    explanation: `Azonos kitevőjű hatványok szorzásakor az alapokat összemoszorozzuk, a közös kitevőt pedig változatlanul hagyjuk.`
+                };
+            } else {
+                task = {
+                    type: 'text_box',
+                    questionText: `Osztás (azonos kitevő): <strong>(${base}:${base2})<sup>${exp1}</sup></strong> vagy tört alakban:`,
+                    correctAnswer: `${base}${exp1}:${base2}${exp1}`,
+                    displayAnswer: `${base}<sup>${exp1}</sup> : ${base2}<sup>${exp1}</sup>`,
+                    explanation: `Azonos kitevőjű hatványok osztásakor az alapokat elosztjuk, a közös kitevőt pedig változatlanul hagyjuk.`
+                };
+            }
+        }
+
+        generatedTasks.push(task);
+    }
+
+    renderTasks();
+}
+
+function renderTasks() {
+    const wrapper = document.getElementById('tasks-wrapper');
+    wrapper.innerHTML = '';
+
+    const name = document.getElementById('student-name').value.trim();
+    document.getElementById('display-student-info').innerText = (currentMode === 'individual' && name) ? `Tanuló: ${name}` : '';
+
+    generatedTasks.forEach((task, idx) => {
+        const card = document.createElement('div');
+        card.className = 'task-card';
+
+        let inputOrSolution = '';
+        if (currentMode === 'individual') {
+            if (task.type === 'power_box') {
+                inputOrSolution = `
+                    <div class="power-input-wrapper">
+                        <input type="text" class="base-input" id="base-${idx}" placeholder="alap">
+                        <input type="text" class="exp-input" id="exp-${idx}" placeholder="kit">
+                    </div>
+                `;
+            } else {
+                inputOrSolution = `<input type="text" class="standard-input" id="ans-${idx}" placeholder="válasz (pl. a·b)">`;
+            }
+        } else {
+            inputOrSolution = `<span class="group-solution" id="sol-${idx}" style="visibility: ${answerKeyVisible ? 'visible' : 'hidden'}; color: var(--success); font-weight: bold;">= ${task.displayAnswer}</span>`;
+        }
+
+        card.innerHTML = `
+            <div class="task-main-row">
+                <span><strong>${idx + 1}.</strong> ${task.questionText}</span>
+                ${inputOrSolution}
+            </div>
+            <div class="solution-breakdown" id="breakdown-${idx}">
+                <strong>Levezetés / Magyarázat:</strong>
+                <div>${task.explanation}</div>
+            </div>
+        `;
+        wrapper.appendChild(card);
+    });
+}
+
+function toggleAnswerKey() {
+    answerKeyVisible = !answerKeyVisible;
+    generatedTasks.forEach((_, idx) => {
+        const elem = document.getElementById(`sol-${idx}`);
+        if (elem) elem.style.visibility = answerKeyVisible ? 'visible' : 'hidden';
+    });
+}
+
+function checkAnswers() {
+    let correct = 0;
+    generatedTasks.forEach((task, idx) => {
+        const breakdownBox = document.getElementById(`breakdown-${idx}`);
+        let isCorrect = false;
+
+        if (task.type === 'power_box') {
+            const baseInput = document.getElementById(`base-${idx}`);
+            const expInput = document.getElementById(`exp-${idx}`);
+            if (!baseInput || !expInput) return;
+
+            let uBase = baseInput.value.trim().toLowerCase();
+            let uExp = parseInt(expInput.value.trim());
+
+            if (uBase === String(task.correctBase).toLowerCase() && uExp === task.correctExp) {
+                isCorrect = true;
+                baseInput.style.borderColor = 'var(--success)';
+                expInput.style.borderColor = 'var(--success)';
+                baseInput.style.backgroundColor = '#E8F8F5';
+                expInput.style.backgroundColor = '#E8F8F5';
+            } else {
+                baseInput.style.borderColor = 'var(--danger)';
+                expInput.style.borderColor = 'var(--danger)';
+                baseInput.style.backgroundColor = '#FDEDEC';
+                expInput.style.backgroundColor = '#FDEDEC';
+            }
+        } else {
+            const input = document.getElementById(`ans-${idx}`);
+            if (!input) return;
+
+            let userVal = input.value.trim().toLowerCase().replace(/\s+/g, '').replace(/\*/g, '·');
+            let targetVal = String(task.correctAnswer).toLowerCase().replace(/\s+/g, '');
+
+            if (userVal === targetVal) {
+                isCorrect = true;
+                input.style.borderColor = 'var(--success)';
+                input.style.backgroundColor = '#E8F8F5';
+            } else {
+                input.style.borderColor = 'var(--danger)';
+                input.style.backgroundColor = '#FDEDEC';
+            }
+        }
+
+        if (isCorrect) {
+            correct++;
+            if (breakdownBox) breakdownBox.style.display = 'none';
+        } else {
+            if (breakdownBox) breakdownBox.style.display = 'flex';
+        }
+    });
+
+    const total = generatedTasks.length;
+    const name = document.getElementById('student-name').value.trim() || 'Tanuló';
+    const percent = Math.round((correct / total) * 100);
+
+    const banner = document.getElementById('summary-banner');
+    document.getElementById('summary-title').innerText = `Eredményértékelés - ${name}`;
+    document.getElementById('summary-details').innerHTML = `Pontszám: ${correct} / ${total} (${percent}%)`;
+    banner.style.display = 'flex';
+
+    document.getElementById('main-content-area').scrollTop = 0;
+
+    let topicSelect = document.getElementById('topic-select');
+    let topicName = topicSelect.options[topicSelect.selectedIndex].text;
+    saveStat(name, topicName, `${correct}/${total}`, `${percent}%`);
+}
+
+function saveStat(name, topic, score, percent) {
+    let stats = JSON.parse(localStorage.getItem('math_hatvanyok_stats') || '[]');
+    stats.push({ name: name, topic: topic, score: score, percent: percent });
+    localStorage.setItem('math_hatvanyok_stats', JSON.stringify(stats));
+    renderStats();
+}
+
+function renderStats() {
+    let stats = JSON.parse(localStorage.getItem('math_hatvanyok_stats') || '[]');
+    const tbody = document.getElementById('stats-tbody');
+    tbody.innerHTML = '';
+    stats.forEach(s => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${s.name}</td>
+                <td>${s.topic}</td>
+                <td><strong>${s.score}</strong></td>
+                <td><strong>${s.percent}</strong></td>
+            </tr>
+        `;
+    });
+}
+
+function clearStats() {
+    if (confirm('Biztosan törölni szeretnéd a statisztikát?')) {
+        localStorage.removeItem('math_hatvanyok_stats');
+        renderStats();
+    }
+}
+
+function downloadPDF() {
+    let stats = JSON.parse(localStorage.getItem('math_hatvanyok_stats') || '[]');
+    if (stats.length === 0) {
+        alert('Nincs mentett statisztika a letöltéshez!');
+        return;
+    }
+    window.print();
+}
+
+window.onload = () => {
+    updateSubOptions();
+    renderStats();
+};
+</script>
+</body>
+</html>
